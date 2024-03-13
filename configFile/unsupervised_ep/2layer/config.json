@@ -1,0 +1,42 @@
+{
+ "device": 0,
+ "dataset": "mnist",
+ "n_class": 10,
+ "action": "unsupervised_ep",
+ "epochs": 100,
+ "batchSize": 32,
+ "test_batchSize": 512,
+ "fcLayers": [784, 2000, 2000],
+ "lr": [0.01, 0.015],
+ "activation_function": "hardsigm",
+ "optimizer": "SGD",
+ "loss": "MSE",
+ "eta": 0.1,
+ "gamma": 0.65,
+ "nudge": 4,
+ "smooth": true,
+ "dropout":true,
+ "dropProb": [0.3, 0, 0.2],
+
+ "dt": 0.2,
+ "T": 60,
+ "Kmax": 20,
+ "beta": 0.2,
+ "clamped": 1,
+ "error_estimate": "one-sided",
+
+ "semi_seed": 13,
+ "train_label_number": 3000,
+ "pre_epochs": 100,
+ "pre_batchSize": 32,
+ "pre_lr": [0.001, 0.0035],
+
+ "class_label_percentage": 1,
+ "class_activation": "sigmoid",
+ "class_lr": [0.0045],
+ "class_epoch": 100,
+ "class_optimizer": "Adam",
+ "class_dropProb": 0.2,
+ "class_smooth":false
+
+}

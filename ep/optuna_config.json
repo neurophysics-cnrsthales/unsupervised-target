@@ -1,0 +1,32 @@
+{
+  "device": 0,
+  "dataset": "mnist",
+  "n_class": 10,
+  "action": "train_class_layer",
+  "epochs": 20,
+  "mode": "batch",
+  "test_batchSize": 256,
+  "fcLayers": [784, 2000],
+  "activation_function": "hardsigm",
+  "loss": "MSE",
+  "optimizer": "SGD",
+  "nudge_max": 10,
+  "dropProb": [0.3, 0.2],
+  "smooth": true,
+
+  "dt": 0.2,
+  "T": 40,
+  "Kmax": 10,
+  "clamped": 1,
+  "error_estimate": "one-sided",
+  "dropout": true,
+
+  "pre_epochs": 100,
+  "train_label_number": 100,
+  "semi_seed": 13,
+
+  "class_label_percentage": 1,
+  "class_epoch": 50,
+  "class_smooth": true,
+  "class_dropProb": 0.4
+}

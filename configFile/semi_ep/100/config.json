@@ -1,0 +1,47 @@
+{
+ "device": 0,
+ "dataset": "mnist",
+ "n_class": 10,
+ "action": "semi_supervised_ep",
+ "epochs": 200,
+ "batchSize": 128,
+ "test_batchSize": 256,
+ "fcLayers": [784, 5000, 10],
+ "lr": [4e-4, 9e-3],
+ "activation_function": "hardsigm",
+ "loss": "Cross-entropy",
+ "optimizer": "Adam",
+ "eta": 0.1,
+ "gamma": 0.1,
+ "nudge": 1,
+ "smooth": true,
+ "dropout": true,
+ "dropProb": [0.3, 0.5, 0],
+
+ "dt": 0.2,
+ "T": 60,
+ "Kmax": 10,
+ "beta": 0.45,
+ "clamped":1,
+ "error_estimate": "one-sided",
+
+ "semi_seed": -1,
+ "train_label_number": 100,
+ "pre_epochs": 100,
+ "pre_batchSize": 32,
+ "pre_lr": [0.001, 0.0035],
+
+ "class_label_percentage": 1,
+ "class_activation": "sigmoid",
+ "class_lr": [0.1],
+ "class_epoch": 50,
+ "class_optimizer": "Adam",
+ "class_dropProb": 0.4,
+ "class_smooth": false
+
+
+
+
+
+
+}

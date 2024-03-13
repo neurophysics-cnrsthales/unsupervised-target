@@ -1,0 +1,29 @@
+#### Figure
+figure.figsize : 9.05505, 3.1496
+
+#### Axes
+axes.titlesize : x-large
+axes.labelsize : 10.5
+axes.linewidth : 1
+
+#### Ticks
+xtick.labelsize : 10
+xtick.direction : in
+ytick.labelsize : 10
+ytick.direction : in
+
+#### Lines
+lines.linewidth : 1.8
+lines.markersize : 8
+
+#### Fonts
+font.size : 11
+
+#### Legend
+legend.fontsize : 9.5
+legend.frameon : False
+
+#### Savefig
+savefig.dpi : 500
+savefig.format : pdf
+savefig.bbox : tight

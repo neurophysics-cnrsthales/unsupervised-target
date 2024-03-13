@@ -1,0 +1,23 @@
+{
+  "device": 0,
+  "dataset": "mnist",
+  "action": "semi_supervised_bp",
+  "epochs": 400,
+  "pre_epochs": 200,
+  "mode": "batch",
+  "test_batchSize": 256,
+  "fcLayers": [784, 5000, 10],
+  "activation_function": ["x","relu","sigmoid"],
+  "loss": "Cross-entropy",
+  "optimizer" : "Adam",
+  "dropProb": [0.3, 0.5, 0],
+  "smooth": false,
+  "train_label_number": 100,
+  "class_label_percentage": 1,
+  "nudge_max": 10,
+  "n_class": 10,
+  "semi_seed": 13,
+  "class_epoch": 50,
+  "class_dropProb": 0.4,
+  "class_smooth": false
+}
