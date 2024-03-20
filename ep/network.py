@@ -60,41 +60,6 @@ class MlpEP(jit.ScriptModule):
 
         self = self.to(device)
 
-    # @jit.script_method
-    # # todo combine it with the same stepper
-    # def stepper_hidden(self, h: List[torch.Tensor], p_distribut: Optional[List[torch.Tensor]],
-    #                    y_distribut: Optional[torch.Tensor],
-    #                    target: Optional[torch.Tensor] = None,
-    #                    beta: Optional[float] = None) -> Tuple[List[torch.Tensor], torch.Tensor, torch.Tensor]:
-    #
-    #     y = F.softmax(torch.mm(self.rho(h[0]), self.W[0]) + self.bias[0], dim=1)
-    #     pre_y = torch.mm(self.rho(h[0]), self.W[0]) + self.bias[0]
-    #     if y_distribut is not None:
-    #         y = y_distribut * y
-    #         pre_y = y_distribut * pre_y
-    #
-    #     if len(h) > 1:
-    #         dhdt = []
-    #         dhdt.append(-h[0] + (self.rhop(h[0]) * (torch.mm(self.rho(h[1]), self.W[1]) + self.bias[1])))
-    #         if target is not None and beta is not None:
-    #             dhdt[0] = dhdt[0] + beta * torch.mm((target - y), self.W[0].T)
-    #
-    #         for layer in range(1, len(h) - 1):
-    #             dhdt.append(-h[layer] + self.rhop(h[layer]) * (
-    #                     torch.mm(self.rho(h[layer + 1]), self.W[layer + 1]) + self.bias[layer + 1] + torch.mm(
-    #                 self.rho(h[layer - 1]),
-    #                 self.W[layer].T)))
-    #
-    #         for (layer, dhdt_item) in enumerate(dhdt):
-    #             if p_distribut is not None:
-    #                 # TODO need to rescale the ouput with (1-p)?
-    #                 h[layer] = p_distribut[layer] * (h[layer] + self.dt * dhdt_item)
-    #             else:
-    #                 h[layer] = h[layer] + self.dt * dhdt_item
-    #             if self.clamped:
-    #                 h[layer] = h[layer].clamp(0, 1)
-    #
-    #     return h, y, pre_y
 
     @jit.script_method
     def stepper_softmax(self, s: List[torch.Tensor], p_distribut: Optional[List[torch.Tensor]],
@@ -163,33 +128,6 @@ class MlpEP(jit.ScriptModule):
                 s[layer] = s[layer].clamp(0, 1)
 
         return s
-    #
-    # @jit.script_method
-    # def forward_softmax(self, h: List[torch.Tensor],
-    #                     p_distribut: Optional[List[torch.Tensor]] = None,
-    #                     y_distribut: Optional[torch.Tensor] = None,
-    #                     beta: Optional[float] = None, target: Optional[torch.Tensor] = None) \
-    #         -> Tuple[List[torch.Tensor], torch.Tensor, torch.Tensor]:
-    #
-    #     T, Kmax = self.T, self.Kmax
-    #
-    #     y = F.softmax(torch.mm(self.rho(h[0]), self.W[0]) + self.bias[0], dim=1)
-    #
-    #     pre_y = torch.mm(self.rho(h[0]), self.W[0]) + self.bias[0]
-    #
-    #     if y_distribut is not None:
-    #         y = y_distribut * y
-    #         pre_y = y_distribut * pre_y
-    #
-    #     with torch.no_grad():
-    #         if beta is None and target is None:
-    #             if len(h) > 1:
-    #                 for t in range(T):
-    #                     h, y, pre_y = self.stepper_hidden(h, p_distribut, y_distribut, target=target, beta=beta)
-    #         else:
-    #             for t in range(Kmax):
-    #                 h, y, pre_y = self.stepper_hidden(h, p_distribut, y_distribut, target=target, beta=beta)
-    #     return h, y, pre_y
 
     @jit.script_method
     def forward(self, s: List[torch.Tensor], p_distribut: Optional[List[torch.Tensor]] = None,
@@ -262,36 +200,6 @@ class MlpEP(jit.ScriptModule):
             self.W[i].grad = -gradW[i]
             self.bias[i].grad = -gradBias[i]
 
-    #
-    # # @jit.script_method
-    # def computeGradientEP_softmax(self, h: List[torch.Tensor], heq: List[torch.Tensor], y: torch.Tensor,
-    #                               target: torch.Tensor,
-    #                               ybeta: Optional[torch.Tensor] = None):
-    #     # define the coefficient for the hidden neurons
-    #     batch_size = h[0].size(0)
-    #     coef = 1 / (self.beta * batch_size)
-    #     if self.error_estimate == 'symmetric':
-    #         coef = coef * 0.5
-    #     gradW, gradBias = [], []
-    #     # TODO update the gradients in self.W[i].grad
-    #     with torch.no_grad():
-    #         if ybeta is None:
-    #             gradW.append(-(1 / batch_size) * torch.mm(torch.transpose(self.rho(h[0]), 0, 1), (y - target)))
-    #             gradBias.append(-(1 / batch_size) * (y - target).sum(0))
-    #         else:
-    #             gradW.append(-(0.5 / batch_size) * (torch.mm(torch.transpose(self.rho(h[0]), 0, 1), (y - target)) +
-    #                                                 torch.mm(torch.transpose(self.rho(heq[0]), 0, 1),
-    #                                                          (ybeta - target))))
-    #             gradBias.append(-(0.5 / batch_size) * (y + ybeta - 2 * target).sum(0))
-    #         for layer in range(len(h) - 1):
-    #             gradW.append(coef * (torch.mm(torch.transpose(self.rho(h[layer + 1]), 0, 1),
-    #                           self.rho(h[layer])) - torch.mm(torch.transpose(self.rho(heq[layer + 1]), 0, 1),
-    #                           self.rho(heq[layer]))))
-    #             gradBias.append(coef * (self.rho(h[layer]) - self.rho(heq[layer])).sum(0))
-    #     for i in range(len(self.W)):
-    #         self.W[i].grad = -gradW[i]
-    #         self.bias[i].grad = -gradBias[i]
-
     def init_state(self, data):
         """
         Init the state of the network
@@ -306,49 +214,6 @@ class MlpEP(jit.ScriptModule):
         state.append(data.float())
 
         return state
-
-    # def initHidden(self, data, drop_visible=None):
-    #     h = []
-    #     size = data.size(0)
-    #     y = torch.zeros(size, self.fcLayers[0], requires_grad=False)
-    #     for layer in range(1, len(self.fcLayers) - 1):
-    #         h.append(torch.zeros(size, self.fcLayers[layer], requires_grad=False))
-    #     if drop_visible is None:
-    #         h.append(data.float())
-    #     else:
-    #         h.append(drop_visible * data.float())
-    #
-    #     return h, y
-
-    # @jit.script_method
-    # def stepper_generate(self, s: List[torch.Tensor], target: torch.Tensor):
-    #     dsdt = []
-    #     # fix the output
-    #     s[0] = target.clone()
-    #     # dsdt.append(0.5 * (target - s[0]))
-    #     for layer in range(1, len(s) - 1):
-    #         dsdt.append(-s[layer] + self.rhop(s[layer]) * (torch.mm(self.rho(s[layer + 1]), self.W[layer]) +
-    #                                                        self.bias[layer] + torch.mm(self.rho(s[layer - 1]),
-    #                                                                                    self.W[layer - 1].T)))
-    #
-    #     # for the input layer
-    #     dsdt.append(-s[-1] + (self.rhop(s[-1])) * torch.mm(self.rho(s[-2]), self.W[-1].T))  # no biases
-    #
-    #     for (layer, dsdt_item) in enumerate(dsdt):
-    #         s[layer + 1] = s[layer + 1] + self.dt * dsdt_item
-    #         s[layer + 1] = s[layer + 1].clamp(0, 1)
-    #
-    #     return s
-    #
-    # def generate_image(self, clamp_input, target):
-    #     s = self.init_state(clamp_input)
-    #     # transfer to cuda
-    #     if self.cuda:
-    #         s = [item.to(self.device) for item in s]
-    #     with torch.no_grad():
-    #         for t in range(self.T):
-    #             s = self.stepper_generate(s, target)
-    #     return s
 
 
 class Classifier(nn.Module):

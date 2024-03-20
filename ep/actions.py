@@ -48,28 +48,6 @@ def define_optimizer_classlayer(net, lr, optimizer_type, momentum=0, dampening=0
     return parameters, optimizer
 
 
-# def defineScheduler(optimizer, optimizer_type, decay_factor, decay_epoch, exponential_factor):
-#     # linear
-#     if optimizer_type == 'linear':
-#         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1,
-#                                                            end_factor=decay_factor,
-#                                                            total_iters=decay_epoch)
-#     # exponential
-#     elif optimizer_type == 'exponential':
-#         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, exponential_factor)
-#     # step
-#     elif optimizer_type == 'step':
-#         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=decay_epoch, gamma=decay_factor)
-#     # combine cosine
-#     elif optimizer_type == 'cosine':
-#         scheduler1 = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=decay_factor,
-#                                                          total_iters=decay_epoch)
-#         scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=decay_epoch)
-#         scheduler = torch.optim.lr_scheduler.ChainedScheduler([scheduler1, scheduler2])
-#
-#     return scheduler
-
-
 def supervised_ep(net, jparams, train_loader, test_loader, BASE_PATH=None, trial=None):
     global DATAFRAME
     # define optimizer
