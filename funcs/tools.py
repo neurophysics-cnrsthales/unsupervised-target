@@ -203,8 +203,10 @@ def update_dataframe(BASE_PATH, dataframe, error1, error2, filename='results.csv
     else:
         data = [error1[-1], min(error1), error2[-1], min(error2), loss[-1], min(loss)]
 
-    new_data = pd.DataFrame([data], index=[1], columns=dataframe.columns)
-    dataframe = pd.concat([dataframe, new_data], axis=0)
+    new_row = pd.Series(data, index=dataframe.columns)
+    new_row_frame = pd.DataFrame([new_row], columns=dataframe.columns)
+    dataframe = (dataframe.copy() if new_row_frame.empty else new_row_frame.copy() if dataframe.empty else pd.concat(
+        [dataframe, new_row_frame]))
 
     try:
         dataframe.to_csv(os.path.join(BASE_PATH, filename))
