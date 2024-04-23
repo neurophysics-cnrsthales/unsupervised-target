@@ -115,43 +115,43 @@ The commands should be executed at the same level as the README file in bash scr
 
 #### Unsupervised BP
 _Train a one-layer network:_  
-``python -m bp.main --json_path './configFile/unsupervised_bp/1layer' ``  
+``python -m bp.main --json_path "./configFile/unsupervised_bp/1layer" ``  
 _Train a two-layer network:_  
-``python -m bp.main --json_path './configFile/unsupervised_bp/2layer' ``
+``python -m bp.main --json_path "./configFile/unsupervised_bp/2layer" ``
 
 #### Unsupervised EP 
 _Train a one-layer network:_  
-``python -m ep.main --json_path './configFile/unsupervised_ep/1layer' ``  
+``python -m ep.main --json_path "./configFile/unsupervised_ep/1layer" ``  
 _Train a two-layer network:_   
-``python -m ep.main --json_path './configFile/unsupervised_ep/2layer' ``  
+``python -m ep.main --json_path "./configFile/unsupervised_ep/2layer" ``  
 
 #### Semi-supervised BP
 _Different configuration files are used for various labeled number scenarios._  
-``python -m bp.main --json_path './configFile/semi_bp/100' ``  
-``python -m bp.main --json_path './configFile/semi_bp/300' ``  
-``python -m bp.main --json_path './configFile/semi_bp/600' ``  
-``python -m bp.main --json_path './configFile/semi_bp/1000' ``  
-``python -m bp.main --json_path './configFile/semi_bp/3000' ``  
+``python -m bp.main --json_path "./configFile/semi_bp/100" ``  
+``python -m bp.main --json_path "./configFile/semi_bp/300" ``  
+``python -m bp.main --json_path "./configFile/semi_bp/600" ``  
+``python -m bp.main --json_path "./configFile/semi_bp/1000" ``  
+``python -m bp.main --json_path "./configFile/semi_bp/3000" ``  
 
 #### Semi-supervised EP  
 _Different configuration files are used for various labeled number scenarios._  
-``python -m ep.main --json_path './configFile/semi_ep/100' ``  
-``python -m ep.main --json_path './configFile/semi_ep/300' ``  
-``python -m ep.main --json_path './configFile/semi_ep/600' ``  
-``python -m ep.main --json_path './configFile/semi_ep/1000' ``  
-``python -m ep.main --json_path './configFile/semi_ep/3000' ``  
+``python -m ep.main --json_path "./configFile/semi_ep/100" ``  
+``python -m ep.main --json_path "./configFile/semi_ep/300" ``  
+``python -m ep.main --json_path "./configFile/semi_ep/600" ``  
+``python -m ep.main --json_path "./configFile/semi_ep/1000" ``  
+``python -m ep.main --json_path "./configFile/semi_ep/3000" ``  
 
 #### Supervised BP
 _Train a perceptron with 2000 output neurons:_  
-`python -m bp.main --json_path './configFile/supervised_bp/1layer' `  
+`python -m bp.main --json_path "./configFile/supervised_bp/1layer" `  
 _Train a MLP with 2000 output neurons:_    
-`python -m bp.main --json_path './configFile/supervised_bp/2layer' ` 
+`python -m bp.main --json_path "./configFile/supervised_bp/2layer" ` 
 
 #### Supervised EP  
 _Train a perceptron with 10 output neurons:_    
-`python -m ep.main --json_path './configFile/supervised_ep/1layer' `  
+`python -m ep.main --json_path './configFile/supervised_ep/1layer" `  
 _Train a MLP with 10 output neurons:_    
-`python -m ep.main --json_path './configFile/supervised_ep/2layer' `
+`python -m ep.main --json_path './configFile/supervised_ep/2layer" `
 
 ## Hyperparameters research
 We use the random research offer by [optuna](https://optuna.org/) to do the hyper-parameters optimization.
@@ -171,23 +171,23 @@ We take the two-layer network as an example.
 For alternative network structures, simply modify the network architecture in the _pre_config.file_.
 #### BP hyperparameters  
 _Supervised learning with a MLP:_  
-`python -m bp.optuna_optim --json_path './configFile/hyper_bp/supervised'`  
+`python -m bp.optuna_optim --json_path "./configFile/hyper_bp/supervised"`  
 _Unsupervised learning with a two-layer network:_  
-`python -m bp.optuna_optim --json_path './configFile/hyper_bp/unsupervised'`  
+`python -m bp.optuna_optim --json_path "./configFile/hyper_bp/unsupervised"`  
 _Semi-supervised learning with a MLP (change the _train_label_number_ in pre_config file):_  
-`python -m bp.optuna_optim --json_path './configFile/hyper_bp/semi'`  
+`python -m bp.optuna_optim --json_path "./configFile/hyper_bp/semi"`  
 _Train the linear classifier on top of a trained unsupervised network:_  
-`python -m bp.optuna_optim --json_path './configFile/hyper_bp/classifier' --trained_path './simuResults/unsupervised_bp_2layer/model' `
+`python -m bp.optuna_optim --json_path "./configFile/hyper_bp/classifier' --trained_path './simuResults/unsupervised_bp_2layer/model" `
 
 #### EP hyperparameters  
 _Supervised learning with a MLP:_  
-`python -m ep.optuna_optim --json_path './configFile/hyper_ep/supervised'`    
+`python -m ep.optuna_optim --json_path "./configFile/hyper_ep/supervised"`    
 _Unsupervised learning with a two-layer network:_  
-`python -m ep.optuna_optim --json_path './configFile/hyper_ep/unsupervised'`    
+`python -m ep.optuna_optim --json_path "./configFile/hyper_ep/unsupervised"`    
 _Semi-supervised learning with a MLP (change the _train_label_number_ in pre_config file):_  
-`python -m ep.optuna_optim --json_path './configFile/hyper_ep/semi'`   
+`python -m ep.optuna_optim --json_path "./configFile/hyper_ep/semi"`   
 _Train the linear classifier on top of a trained unsupervised network:_  
-`python -m ep.optuna_optim --json_path './configFile/hyper_ep/classifier' --trained_path './simuResults/unsupervised_ep_2layer/model' `
+`python -m ep.optuna_optim --json_path "./configFile/hyper_ep/classifier' --trained_path './simuResults/unsupervised_ep_2layer/model" `
 
 ## Plotting the figures
 
