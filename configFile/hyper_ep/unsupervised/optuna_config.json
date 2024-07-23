@@ -6,6 +6,7 @@
   "epochs": 100,
   "mode": "batch",
   "test_batchSize": 256,
+  "cnn":false,
   "fcLayers": [784, 2000, 2000],
   "activation_function": "hardsigm",
   "loss": "MSE",

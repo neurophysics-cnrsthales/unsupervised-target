@@ -6,6 +6,7 @@
   "epochs": 400,
   "batchSize": 256,
   "test_batchSize": 256,
+  "cnn": false,
   "fcLayers": [784, 5000, 10],
   "lr":[6e-4, 8e-4],
   "activation_function": ["x","relu","sigmoid"],

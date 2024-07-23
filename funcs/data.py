@@ -37,21 +37,49 @@ class MyDataset(Dataset):
         self.target_transform = target_transform
 
     def __getitem__(self, i):
-        data = self.data[i, :].numpy()
-        target = self.targets[i]
-        # data, label = self.data[item].numpy(), self.targets[item]
-        data = Image.fromarray(data)
+        data = self.data[i, :]
 
         if self.transform:
+            if not isinstance(data, np.ndarray):
+                data = data.numpy()
             data = self.transform(data)
+            # data = torch.movedim(data, -1, 1)
+
+        # print("data size is :", data.size())
+
+        target = self.targets[i]
 
         if self.target_transform:
             target = self.target_transform(target)
 
-        if self.targets is not None:
-            return data, target
-        else:
-            return data
+        return data, target
+        #
+        # data = self.data[i, :]
+        # if not isinstance(data, np.ndarray):
+        #     data = data.numpy()
+        # # if self.order:
+        # #     data = data.permute(0, 1)
+        #
+        # target = self.targets[i]
+        #
+        # if self.transform:
+        #     data = self.transform(data)
+        #
+        # if self.target_transform:
+        #     target = self.target_transform(target)
+
+        ## TODO make it compatible with fashion mnist?
+
+        # # data, label = self.data[item].numpy(), self.targets[item]
+        # if data.dtype != np.uint8:
+        #     data = data.astype(np.uint8)
+
+        # data = Image.fromarray(data)
+
+        # if self.targets is not None:
+        #     return data, target
+        # else:
+        #     return data
 
     def __len__(self):
         return len(self.data)
@@ -104,7 +132,10 @@ def semi_supervised_dataset(train_set, targets, output_neurons, n_class, labeled
     if number_per_class > 1:
         N_Y_super = generate_n_targets_label(Y_super, number_per_class, output_neurons)
     else:
-        N_Y_super = torch.nn.functional.one_hot(Y_super, num_classes=-1)
+        if torch.is_tensor(Y_super):
+            N_Y_super = torch.nn.functional.one_hot(Y_super, num_classes=-1)
+        else:
+            N_Y_super = torch.nn.functional.one_hot(torch.tensor(Y_super), num_classes=-1)
 
     # we load the target
     dataset_super = MyDataset(X_super, N_Y_super, transform=transform, target_transform=None)
@@ -115,41 +146,68 @@ def semi_supervised_dataset(train_set, targets, output_neurons, n_class, labeled
     return dataset_super, dataset_unsuper
 
 
-def return_mnist(jparams, validation=False, fashion=False):
+def return_dataset(jparams, validation=False):
     # Define the Transform
-    transforms_type = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
-                                                      # torchvision.transforms.Normalize((0.1307,), (0.3081,)),
+    if jparams["cnn"]:
+        transforms_type = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
+    else:
+        transforms_type = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
                                                       ReshapeTransform((-1,))])
 
-    # Train set
-    if fashion:
-        train_set = torchvision.datasets.FashionMNIST(root='./data', train=True, download=True,
-                                                      transform=transforms_type,
-                                                      target_transform=ReshapeTransformTarget(10))
-    else:
+    if jparams["dataset"] == "mnist":
+        print('We use the MNIST Dataset')
         train_set = torchvision.datasets.MNIST(root='./data', train=True, download=True,
                                                transform=transforms_type,
                                                target_transform=ReshapeTransformTarget(10))
+        test_set = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transforms_type)
+
+        train_data, train_labels = train_set.data, train_set.targets
+
+    elif jparams["dataset"] == "fashionMnist":
+        print('We use the Fashion MNIST Dataset')
+        train_set = torchvision.datasets.FashionMNIST(root='./data', train=True, download=True,
+                                                      transform=transforms_type,
+                                                      target_transform=ReshapeTransformTarget(10))
+        test_set = torchvision.datasets.FashionMNIST(root='./data', train=False, download=True,
+                                                     transform=transforms_type)
+        train_data, train_labels = train_set.data, train_set.targets
+
+    elif jparams["dataset"] == "svhn":
+        print('We use the SVHN dataset')
+        # TODO use the "extra" training set
+        train_set = torchvision.datasets.SVHN(root='./data', split='train', transform=transforms_type,
+                                              target_transform=ReshapeTransformTarget(10), download=True)
+        test_set = torchvision.datasets.SVHN(root='./data', split='test', transform=transforms_type, download=True)
+
+        train_data, train_labels = train_set.data, train_set.labels
+
+    else:
+        raise ValueError(f"f'{jparams['dataset']}' dataset is not defined!")
 
     # Validation set
     if validation:
         (X_train, X_validation,
-         Y_train, Y_validation) = train_test_split(train_set.data, train_set.targets,
-                                                   test_size=0.1, random_state=34, stratify=train_set.targets)
+         Y_train, Y_validation) = train_test_split(train_data, train_labels,
+                                                   test_size=0.1, random_state=34, stratify=train_labels)
+        if jparams["dataset"] == 'svhn':
+            train_set = MyDataset(X_train, Y_train, target_transform=ReshapeTransformTarget(10))
+            validation_set = MyDataset(X_validation, Y_validation, target_transform=None)
+        else:
+            train_set = MyDataset(X_train, Y_train, transform=transforms_type, target_transform=ReshapeTransformTarget(10))
+            validation_set = MyDataset(X_validation, Y_validation, transform=transforms_type, target_transform=None)
 
-        train_set = MyDataset(X_train, Y_train, transform=transforms_type, target_transform=ReshapeTransformTarget(10))
-        validation_set = MyDataset(X_validation, Y_validation, transform=transforms_type, target_transform=None)
     else:
         validation_set = None
 
     # Class set and Layer set
     if jparams['class_label_percentage'] == 1:
-        class_set = MyDataset(train_set.data, train_set.targets, transform=transforms_type, target_transform=None)
+        class_set = MyDataset(train_data, train_labels, transform=transforms_type, target_transform=None)
         layer_set = train_set
     else:
-        class_set = SplitClass(train_set.data, train_set.targets, jparams['class_label_percentage'], seed=34,
+        # TODO set the train_set.targets to train_set.labels
+        class_set = SplitClass(train_data, train_labels, jparams['class_label_percentage'], seed=34,
                                transform=transforms_type)
-        layer_set = SplitClass(train_set.data, train_set.targets, jparams['class_label_percentage'], seed=34,
+        layer_set = SplitClass(train_data, train_labels, jparams['class_label_percentage'], seed=34,
                                transform=transforms_type,
                                target_transform=ReshapeTransformTarget(10))
 
@@ -159,16 +217,10 @@ def return_mnist(jparams, validation=False, fashion=False):
     else:
         semi_seed = jparams['semi_seed']
 
-    supervised_dataset, unsupervised_dataset = semi_supervised_dataset(train_set.data, train_set.targets,
+    supervised_dataset, unsupervised_dataset = semi_supervised_dataset(train_data, train_labels,
                                                                        jparams['fcLayers'][-1], jparams['n_class'],
                                                                        jparams['train_label_number'],
                                                                        transform=transforms_type, seed=semi_seed)
-    # Test set
-    if fashion:
-        test_set = torchvision.datasets.FashionMNIST(root='./data', train=False, download=True,
-                                                     transform=transforms_type)
-    else:
-        test_set = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transforms_type)
 
     return train_set, test_set, validation_set, class_set, layer_set, supervised_dataset, unsupervised_dataset
 
@@ -228,28 +280,12 @@ def return_cifar10(jparams, validation=False):
 
 
 def get_dataset(jparams, validation=False):
-    if jparams['dataset'] == 'mnist':
-        print('We use the MNIST Dataset')
-        (train_set, test_set, validation_set,
-         class_set, layer_set,
-         supervised_dataset, unsupervised_dataset) = return_mnist(jparams, validation=validation)
 
-    elif jparams['dataset'] == 'fashionMnist':
-        print('We use the Fashion MNIST Dataset')
-        (train_set, test_set, validation_set,
-         class_set, layer_set,
-         supervised_dataset, unsupervised_dataset) = return_mnist(jparams, validation=validation, fashion=True)
-
-    elif jparams['dataset'] == 'cifar10':
-        print('We use the CIFAR10 dataset')
-        (train_set, test_set, validation_set,
-         class_set, layer_set,
-         supervised_dataset, unsupervised_dataset) = return_cifar10(jparams, validation=validation)
-    else:
-        raise ValueError(f'{jparams["dataset"]} dataset is not defined!')
+    (train_set, test_set, validation_set,
+     class_set, layer_set,
+     supervised_dataset, unsupervised_dataset) = return_dataset(jparams, validation=validation)
 
     # load dataset
-
     (train_loader, test_loader, validation_loader,
      class_loader, layer_loader, supervised_loader, unsupervised_loader) = load_dataset(train_set, test_set,
                                                                                         validation_set,
@@ -285,3 +321,88 @@ def load_dataset(train_set, test_set, validation_set, class_set, layer_set,
 
     return (train_loader, test_loader, validation_loader,
             class_loader, layer_loader, supervised_loader, unsupervised_loader)
+
+
+def returnSVHN(jparams, validation=False):
+    # Define the Transform
+    transform_type = torchvision.transforms.ToTensor()
+    if jparams['cnn']:
+        train_transform_type = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
+    else:
+        train_transform_type = torchvision.transforms.Compose(
+            [torchvision.transforms.ToTensor(), ReshapeTransform((-1,))])
+
+    # Extra set
+    extra_set = torchvision.datasets.SVHN(root='./data', split='extra', transform=train_transform_type,
+                                          target_transform=ReshapeTransformTarget(10), download=True)
+
+    # Train set
+    train_set = torchvision.datasets.SVHN(root='./data', split='train', transform=train_transform_type,
+                                          target_transform=ReshapeTransformTarget(10), download=True)
+    train_data = train_set.data
+    train_labels = train_set.labels
+
+    # Validation set
+    if validation:
+        (X_train, X_validation,
+         Y_train, Y_validation) = train_test_split(train_data, train_labels,
+                                                   test_size=0.1, random_state=34, stratify=train_set.labels)
+
+        train_set = MyDataset(X_train, Y_train, transform=None,
+                              target_transform=ReshapeTransformTarget(10))
+        train_data = X_train
+        train_labels = Y_train
+
+        validation_set = MyDataset(X_validation, Y_validation, transform=None, target_transform=None)
+    else:
+        validation_set = None
+
+    # Class set and Layer set
+    if jparams['class_label_percentage'] == 1:
+        class_set = torchvision.datasets.SVHN(root='./data', split='train',
+                                              transform=train_transform_type, download=False)
+        layer_set = train_set
+    else:
+        class_set = SplitClass(train_data, train_labels,
+                               jparams['class_label_percentage'], seed=34,
+                               transform=train_transform_type)
+
+        layer_set = SplitClass(train_data, train_labels,
+                               jparams['classLabel_percentage'], seed=34,
+                               transform=train_transform_type,
+                               target_transform=ReshapeTransformTarget(10))
+
+    # Supervised set and Unsupervised set
+    if jparams['semi_seed'] < 0:
+        semi_seed = None
+    else:
+        semi_seed = jparams['semi_seed']
+
+    supervised_dataset, unsupervised_dataset = semi_supervised_dataset(train_data, train_labels, jparams['fcLayers'][-1],
+                                                                       jparams['n_class'], jparams['train_label_number'],
+                                                                      transform=train_transform_type, seed=semi_seed)
+    # Test set
+    test_set = torchvision.datasets.SVHN(root='./data', split='test',
+                                         transform=train_transform_type, download=True)
+
+    # load the dataset
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=jparams['batchSize'], shuffle=True)
+    extra_loader = torch.utils.data.DataLoader(extra_set, batch_size=jparams['batchSize'], shuffle=True)
+
+    if validation:
+        validation_loader = torch.utils.data.DataLoader(validation_set, batch_size=jparams['test_batchSize'],
+                                                        shuffle=False)
+    else:
+        validation_loader = None
+    class_loader = torch.utils.data.DataLoader(class_set, batch_size=jparams['test_batchSize'], shuffle=False)
+    layer_loader = torch.utils.data.DataLoader(layer_set, batch_size=jparams['test_batchSize'], shuffle=True)
+    supervised_loader = torch.utils.data.DataLoader(supervised_dataset, batch_size=jparams['pre_batchSize'],
+                                                    shuffle=True)
+    unsupervised_loader = torch.utils.data.DataLoader(unsupervised_dataset, batch_size=jparams['batchSize'],
+                                                      shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=jparams['test_batchSize'], shuffle=False)
+
+    if validation:
+        return train_loader, extra_loader, validation_loader, class_loader, layer_loader, supervised_loader, unsupervised_loader
+    else:
+        return train_loader, extra_loader, test_loader, class_loader, layer_loader, supervised_loader, unsupervised_loader

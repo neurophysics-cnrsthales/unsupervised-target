@@ -7,6 +7,7 @@
   "batchSize": 16,
   "test_batchSize": 256,
   "fcLayers": [784, 2000],
+  "cnn":false,
   "lr":[8],
   "activation_function": ["x", "hardsigm"],
   "optimizer": "SGD",

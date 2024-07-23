@@ -12,7 +12,13 @@ parser = argparse.ArgumentParser(description='Path of json file')
 parser.add_argument(
     '--json_path',
     type=str,
-    default=r'./bp',
+    default=r'./configFile/unsupervised_bp/cnn/mnist',
+    help='path of json configuration'
+)
+parser.add_argument(
+    '--trained_path',
+    type=str,
+    default=r'./simuResults/unsupervised_bp_1layer/model/S-1',
     help='path of json configuration'
 )
 
@@ -28,12 +34,16 @@ batch_size_test = jparams['test_batchSize']
 
 # get data loader
 (train_loader, test_loader, validation_loader,
- class_loader, layer_loader, supervised_loader, unsupervised_loader) = get_dataset(jparams)
+class_loader, layer_loader, supervised_loader, unsupervised_loader) = get_dataset(jparams)
 
 if __name__ == '__main__':
 
     # create the network
-    net = MLP(jparams)
+    if jparams['cnn']:
+        net = CNN(jparams)
+        net.prune_network(amount=jparams["cnn_prune"])
+    else:
+        net = MLP(jparams)
 
     # Cuda problem
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
@@ -51,7 +61,10 @@ if __name__ == '__main__':
 
     elif jparams['action'] == 'unsupervised_bp':
         print("Training the unsupervised bp network")
-        unsupervised_bp(net, jparams, train_loader, class_loader, test_loader, layer_loader, base_path=BASE_PATH)
+        if jparams['cnn']:
+            unsupervsed_bp_cnn(net, jparams, train_loader, test_loader, layer_loader, base_path=BASE_PATH)
+        else:
+            unsupervised_bp(net, jparams, train_loader, class_loader, test_loader, layer_loader, base_path=BASE_PATH)
 
     elif jparams['action'] == 'semi_supervised_bp':
         print("Training the semi_supervised bp network")
@@ -60,6 +73,11 @@ if __name__ == '__main__':
     elif jparams['action'] == 'pretrain_bp':
         print("Training the supervised bp network with little labeled data")
         pre_supervised_bp(net, jparams, supervised_loader, test_loader, base_path=BASE_PATH)
+
+    elif jparams['action'] == 'train_class_layer':
+        print("We train only the linear classifer")
+        trained_path = str(args.trained_path) + '/model_state_dict.pt'
+        train_class_layer(net, jparams, layer_loader, test_loader, trained_path=trained_path, base_path=BASE_PATH)
 
     else:
         raise ValueError(f"f'{jparams['action']}' action is not defined!")

@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class Hardsigm(nn.Module):
     def __init__(self,  low: float = 0, high: float = 1):
         super(Hardsigm, self).__init__()

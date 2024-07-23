@@ -1,7 +1,8 @@
 import optuna
 from funcs.tools import init_bp_dataframe as init_dataframe
-from funcs.tools import update_dataframe
+from funcs.tools import update_dataframe, CustomStepLR
 from .train_test import *
+
 from tqdm import tqdm
 
 DATAFRAME, PretrainFrame, SEMIFRAME, class_dataframe = None, None, None, None
@@ -193,6 +194,65 @@ def unsupervised_bp(net, jparams, train_loader, class_loader, test_loader, layer
     train_class_layer(net, jparams, layer_loader, test_loader, base_path=base_path)
 
 
+def unsupervsed_bp_cnn(net, jparams, train_loader, test_loader, layer_loader, base_path=None, trial=None):
+    # define optimizer
+    _, optimizer = define_optimizer(net, jparams['lr'], jparams['optimizer'])
+
+    # define scheduler
+    scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=1e-2, total_iters=100)
+
+    # create the classification layer
+    class_net = Classifier(jparams)
+
+    # define optimizer
+    _, class_optimizer = define_optimizer(class_net, jparams['class_lr'], jparams['class_optimizer'])
+
+    # define scheduler
+    class_scheduler = CustomStepLR(class_optimizer, jparams['class_epoch'])
+
+    if base_path is not None:
+        # create dataframe for classification layer
+        class_dataframe = init_dataframe(base_path, method='classification_layer',
+                                         dataframe_to_init='classification_layer.csv')
+        class_train_error_list = []
+        final_test_error_list = []
+        final_loss_error_list = []
+
+    for epoch in tqdm(range(jparams['epochs'])):
+        # train unsupervised network
+        train_unsupervised(net, jparams, train_loader, epoch, optimizer)
+        scheduler.step()
+
+        # train classifier
+        class_train_error_epoch = classify_network(net, class_net, layer_loader, class_optimizer,
+                                                   jparams['class_smooth'])
+        # test
+        final_test_error_epoch, final_loss_epoch = test_unsupervised_layer(net, class_net, jparams, test_loader)
+        # scheduler
+        class_scheduler.step()
+
+        if trial is not None:
+            trial.report(final_test_error_epoch, epoch)
+            if trial.should_prune():
+                raise optuna.TrialPruned()
+
+        if base_path is not None:
+            class_train_error_list.append(class_train_error_epoch.item())
+            final_test_error_list.append(final_test_error_epoch.item())
+            final_loss_error_list.append(final_loss_epoch.item())
+            class_dataframe = update_dataframe(base_path, class_dataframe, class_train_error_list,
+                                               final_test_error_list,
+                                               filename='classification_layer.csv', loss=final_loss_error_list)
+            # Save the trained classifier model
+            torch.save(class_net.state_dict(), os.path.join(base_path, 'class_model_state_dict.pt'))
+
+    if trial is not None:
+        return final_test_error_epoch
+
+    # train linear classifer
+    train_class_layer(net, jparams, layer_loader, test_loader, base_path=base_path)
+
+
 def train_class_layer(net, jparams, layer_loader, test_loader, trained_path=None, base_path=None, trial=None):
     """
     Train the added linear classifier. Take the output of unsupervised network as input data and real labels as targets.
@@ -208,9 +268,14 @@ def train_class_layer(net, jparams, layer_loader, test_loader, trained_path=None
     # Create the classification layer
     class_net = Classifier(jparams)
     # Define optimizer
+    # TODO to see whether change the classifier scheduler
+
     class_params, class_optimizer = define_optimizer(class_net, jparams['class_lr'], jparams['class_optimizer'])
     # Define scheduler
-    class_scheduler = torch.optim.lr_scheduler.ExponentialLR(class_optimizer, 0.9)
+    if jparams['cnn']:
+        class_scheduler = CustomStepLR(class_optimizer, jparams['class_epoch'])
+    else:
+        class_scheduler = torch.optim.lr_scheduler.ExponentialLR(class_optimizer, 0.9)
     # Define the record lists
     class_train_error_list, final_test_error_list, final_loss_error_list = [], [], []
     # Define the return error

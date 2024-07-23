@@ -6,6 +6,7 @@
  "epochs": 200,
  "batchSize": 128,
  "test_batchSize": 256,
+ "cnn": false,
  "fcLayers": [784, 5000, 10],
  "lr": [1.6e-4, 6.3e-3],
  "activation_function": "hardsigm",

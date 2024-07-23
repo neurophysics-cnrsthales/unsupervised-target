@@ -6,6 +6,7 @@
   "pre_epochs": 200,
   "mode": "batch",
   "test_batchSize": 256,
+  "cnn":false,
   "fcLayers": [784, 5000, 10],
   "activation_function": ["x","relu","sigmoid"],
   "loss": "Cross-entropy",

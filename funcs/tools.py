@@ -3,6 +3,25 @@ import torch
 import os
 import os.path
 import pandas as pd
+from torch.optim.lr_scheduler import StepLR
+
+
+class CustomStepLR(StepLR):
+    """
+    Custom Learning Rate schedule with step functions for supervised training of classifier
+    Taken from https://github.com/NeuromorphicComputing/SoftHebb/blob/main/demo.py
+    """
+
+    def __init__(self, optimizer, nb_epochs):
+        threshold_ratios = [0.2, 0.35, 0.5, 0.6, 0.7, 0.8, 0.9]
+        self.step_thresold = [int(nb_epochs * r) for r in threshold_ratios]
+        super().__init__(optimizer, -1, False)
+
+    def get_lr(self):
+        if self.last_epoch in self.step_thresold:
+            return [group['lr'] * 0.5
+                    for group in self.optimizer.param_groups]
+        return [group['lr'] for group in self.optimizer.param_groups]
 
 
 def define_loss(loss='MSE'):

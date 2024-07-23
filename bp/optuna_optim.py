@@ -40,11 +40,18 @@ def jparams_create(config, trial):
         jparams["nudge"] = 1
         jparams["pre_batchSize"] = 32
         # optimizing hyperparameters
-        jparams["batchSize"] = trial.suggest_categorical("batchSize", [64, 128, 256, 512])
+        jparams["batchSize"] = 256
+        # jparams["batchSize"] = trial.suggest_categorical("batchSize", [64, 128, 256, 512])
         lr = []
-        for i in range(len(jparams["fcLayers"]) - 1):
-            lr_i = trial.suggest_float("lr" + str(i), 1e-6, 10, log=True)
-            lr.append(lr_i)
+        if jparams["cnn"]:
+            for i in range(len(jparams["fcLayers"]) + 2):
+                lr.append(trial.suggest_float("lr_cnn" + str(i), 1e-5, 10, log=True))
+
+        else:
+            for i in range(len(jparams["fcLayers"]) - 1):
+                lr_i = trial.suggest_float("lr" + str(i), 1e-5, 10, log=True)
+                lr.append(lr_i)
+
         jparams["lr"] = lr.copy()
 
     elif jparams["action"] == 'unsupervised_bp':
@@ -64,9 +71,15 @@ def jparams_create(config, trial):
         jparams["nudge"] = trial.suggest_int("nudge", 1, jparams["nudge_max"])
 
         lr = []
-        for i in range(len(jparams["fcLayers"]) - 1):
-            lr_i = trial.suggest_float("lr" + str(i), 1e-1, 10, log=True)
-            lr.append(lr_i)
+        if jparams["cnn"]:
+            for i in range(len(jparams["fcLayers"]) + 2):
+                lr.append(trial.suggest_float("lr_cnn" + str(i), 1e-9, 1e-3, log=True))
+
+        else:
+            for i in range(len(jparams["fcLayers"]) - 1):
+                lr_i = trial.suggest_float("lr" + str(i), 1e-5, 10, log=True)
+                lr.append(lr_i)
+
         jparams["lr"] = lr.copy()
 
     elif jparams["action"] == 'semi_supervised_bp':
@@ -110,12 +123,16 @@ def objective(trial, config):
     # design the hyperparameters to be optimized
     jparams = jparams_create(config, trial)
 
-    # create the dataset
     (train_loader, test_loader, validation_loader,
-     class_loader, layer_loader, supervised_loader, unsupervised_loader) = get_dataset(jparams, validation=True)
+    class_loader, layer_loader, supervised_loader, unsupervised_loader) = get_dataset(jparams, validation=True)
 
     # create the model
-    net = MLP(jparams)
+    # TODO considering the CNN model
+    if jparams["cnn"]:
+        net = CNN(jparams)
+        net.prune_network(amount=jparams["cnn_prune"])
+    else:
+        net = MLP(jparams)
 
     # load the trained unsupervised network when we train classification layer
     if jparams["action"] == 'bp':
@@ -124,7 +141,10 @@ def objective(trial, config):
 
     elif jparams["action"] == 'unsupervised_bp':
         print("Hyperparameters optimization for unsupervised BP")
-        final_err = unsupervised_bp(net, jparams, train_loader, class_loader, validation_loader, layer_loader,
+        if jparams['cnn']:
+            final_err = unsupervsed_bp_cnn(net, jparams, train_loader, validation_loader, layer_loader, trial=trial)
+        else:
+            final_err = unsupervised_bp(net, jparams, train_loader, class_loader, validation_loader, layer_loader,
                                     base_path=None, trial=trial)
 
     elif jparams["action"] == 'semi_supervised_bp':

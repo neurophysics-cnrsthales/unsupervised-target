@@ -117,7 +117,14 @@ The commands should be executed at the same level as the README file in bash scr
 _Train a one-layer network:_  
 ``python -m bp.main --json_path "./configFile/unsupervised_bp/1layer" ``  
 _Train a two-layer network:_  
-``python -m bp.main --json_path "./configFile/unsupervised_bp/2layer" ``
+``python -m bp.main --json_path "./configFile/unsupervised_bp/2layer" ``  
+_Train a CNN for MNIST dataset:_  
+``python -m bp.main --json_path "./configFile/unsupervised_bp/cnn/mnist" ``  
+_Train a CNN for Fashion-MNIST dataset:_  
+``python -m bp.main --json_path "./configFile/unsupervised_bp/cnn/fashionMnist" ``  
+_Train a CNN for Fashion-MNIST dataset:_  
+``python -m bp.main --json_path "./configFile/unsupervised_bp/cnn/svhn" ``
+
 
 #### Unsupervised EP 
 _Train a one-layer network:_  
@@ -174,6 +181,8 @@ _Supervised learning with a MLP:_
 `python -m bp.optuna_optim --json_path "./configFile/hyper_bp/supervised"`  
 _Unsupervised learning with a two-layer network:_  
 `python -m bp.optuna_optim --json_path "./configFile/hyper_bp/unsupervised"`  
+_Unsupervised learning with a CNN:_  
+`python -m bp.optuna_optim --json_path "./configFile/hyper_bp/unsupervised_cnn"`  
 _Semi-supervised learning with a MLP (change the _train_label_number_ in pre_config file):_  
 `python -m bp.optuna_optim --json_path "./configFile/hyper_bp/semi"`  
 _Train the linear classifier on top of a trained unsupervised network:_  
