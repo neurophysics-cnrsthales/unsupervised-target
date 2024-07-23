@@ -1,16 +1,23 @@
 # Unsupervised End-to-End Training with Bio-inspired Self-defined Target
 
-In this work, we introduce a 'self-defined target' at the network's last layer to realize unsupervised end-to-end training. This target is defined by Winner-Take-All (WTA) selectivity combined with homeostasis mechanism. We calculate the unsupervised global mean square error (MSE) loss, which is the difference between the network's output and our unsupervisedly defined target, and update the weight with the gradient-descent based algorithms.
+In this work, we introduce a 'self-defined target' at the network's last layer to realize unsupervised end-to-end training. 
+This target is defined by Winner-Take-All (WTA) selectivity combined with homeostasis mechanism. 
+We calculate the unsupervised global mean square error (MSE) loss, which is the difference between the network's output 
+and our unsupervisedly defined target, and update the weight with the gradient-descent based algorithms.
 
-This approach, framework-agnostic and compatible with both global and local learning rules, in our case, Backpropation (BP) and Equilibrium propagation (EP) seperately, achieves a 97.6\% test accuracy on the MNIST dataset. Extending to semi-supervised learning, our method dynamically adjusts the target according to data availability, reaching a 96.6\% accuracy with just 600 labeled MNIST samples. 
+This approach, framework-agnostic and compatible with both global and local learning rules, 
+in our case, Backpropation (BP) and Equilibrium propagation (EP) seperately, achieves a 97.6\% test accuracy on the MNIST dataset. 
+We also train a CNN using our unsupervised method (with BP only), achieving test accuracies of 99.2% on MNIST, 90.3% on Fashion-MNIST, and 81.5% on the SVHN dataset.
+Extending to semi-supervised learning, our method dynamically adjusts the target according to data availability, reaching a 96.6\% accuracy with just 600 labeled MNIST samples. 
 
 _In unsupervised training_: 
-- we train two distinct network architectures using our unsupervised learning framework: a **one-layer** network (784-2000) and **two-layer** network (784-2000-2000);
+- We train two distinct network architectures using our unsupervised learning framework: a **one-layer** network (784-2000) and **two-layer** network (784-2000-2000);  
+- We train a convolutional network (32f5-128f3-3000) using our unsupervised target, with weight updates performed using backpropagation.  
 - The final accuracy of the trained network is obtained through two different classification method: **direct association** and **linear classifier**.
 
 _In semi-supervised training_:
-- we keep the same architecture used by [Lee, 2013](https://www.researchgate.net/publication/280581078_Pseudo-Label_The_Simple_and_Efficient_Semi-Supervised_Learning_Method_for_Deep_Neural_Networks), which is a 784-5000-10 muti-layer perceptron;
-- we test the performance in five scenarios with different amounts of available labeled data: 100, 300, 600, 1000, 3000 randomly selected labelled mnist samples. 
+- We keep the same architecture used by [Lee, 2013](https://www.researchgate.net/publication/280581078_Pseudo-Label_The_Simple_and_Efficient_Semi-Supervised_Learning_Method_for_Deep_Neural_Networks), which is a 784-5000-10 muti-layer perceptron;
+- We test the performance in five scenarios with different amounts of available labeled data: 100, 300, 600, 1000, 3000 randomly selected labelled mnist samples. 
 
 ## Getting Started
 
@@ -74,6 +81,7 @@ _Parameters defined in **config.json**._
 | `epochs`                 | Total training epochs.                                                                                             | `200`                                                                                                            |
 | `batchSize`              | Mini batch size for training; set to 1 for unsupervised sequential mode.                                           | `256`                                                                                                            |
 | `test_batchSize`         | Mini batch size for testing.                                                                                       | `512`                                                                                                            |
+| `cnn`                    | Whether use a convolutional network.                                                                               | `false`, `true`                                                                                                  |
 | `fcLayers`               | Architecture of fully connected layers (input, hidden, output).                                                    | `[784, 2000, 2000]`                                                                                              |
 | `lr`                     | Layer-specific learning rates.                                                                                     | `[0.5, 0.3]`                                                                                                     |
 | `activation_function`    | Layer-specific activation in BP; identical across all EP layers.                                                   | BP: `["x", "relu", "hardsigm"]`; EP: `"hardsigm"`                                                                |
