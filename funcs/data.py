@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MultiLabelBinarizer
+import torchvision.transforms as transforms
 
 
 class ReshapeTransform:
@@ -67,8 +68,6 @@ class MyDataset(Dataset):
         #
         # if self.target_transform:
         #     target = self.target_transform(target)
-
-        ## TODO make it compatible with fashion mnist?
 
         # # data, label = self.data[item].numpy(), self.targets[item]
         # if data.dtype != np.uint8:
@@ -174,12 +173,19 @@ def return_dataset(jparams, validation=False):
 
     elif jparams["dataset"] == "svhn":
         print('We use the SVHN dataset')
-        # TODO use the "extra" training set
         train_set = torchvision.datasets.SVHN(root='./data', split='train', transform=transforms_type,
                                               target_transform=ReshapeTransformTarget(10), download=True)
         test_set = torchvision.datasets.SVHN(root='./data', split='test', transform=transforms_type, download=True)
 
         train_data, train_labels = train_set.data, train_set.labels
+
+    elif jparams["dataset"] == "cifar10":
+        print("We use the cifar10 dataset")
+        train_set = FastCIFAR10('./data', train=True, download=True, load_device="cuda") # no one-hot encoding on the targets
+        test_set = FastCIFAR10('./data', train=False)
+        split_set = FastCIFAR10('./data', train=True, download=True, load_device="cpu")
+
+        train_data, train_labels = split_set.data, split_set.targets
 
     else:
         raise ValueError(f"f'{jparams['dataset']}' dataset is not defined!")
@@ -189,7 +195,7 @@ def return_dataset(jparams, validation=False):
         (X_train, X_validation,
          Y_train, Y_validation) = train_test_split(train_data, train_labels,
                                                    test_size=0.1, random_state=34, stratify=train_labels)
-        if jparams["dataset"] == 'svhn':
+        if jparams["dataset"] == 'svhn' or jparams["dataset"] == 'cifar10':
             train_set = MyDataset(X_train, Y_train, target_transform=ReshapeTransformTarget(10))
             validation_set = MyDataset(X_validation, Y_validation, target_transform=None)
         else:
@@ -225,58 +231,48 @@ def return_dataset(jparams, validation=False):
     return train_set, test_set, validation_set, class_set, layer_set, supervised_dataset, unsupervised_dataset
 
 
-def return_cifar10(jparams, validation=False):
+class FastCIFAR10(torchvision.datasets.CIFAR10):
+    """
+    Improves performance of training on CIFAR10 by removing the PIL interface and pre-loading on the GPU (2-3x speedup).
+    Taken from https://github.com/y0ast/pytorch-snippets/tree/main/fast_mnist
+    """
 
-    # Define the Transform
-    train_transform_type = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), ReshapeTransform((-1,))])
+    def __init__(self, *args, load_device="cuda", **kwargs):
+        if torch.cuda.is_available() and load_device=="cuda":
+            device = kwargs.pop('device', "cuda")
+        else:
+            device = kwargs.pop('device', "cpu")
 
-    # Train set
-    train_set = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                             download=True, transform=train_transform_type,
-                                             target_transform=ReshapeTransformTarget(10))
-    # Validation set
-    if validation:
-        (X_train, X_validation,
-         Y_train, Y_validation) = train_test_split(torch.tensor(train_set.data), torch.tensor(train_set.targets),
-                                                   test_size=0.1, random_state=34, stratify=train_set.targets)
+        super().__init__(*args, **kwargs)
+        self.data = torch.tensor(self.data, dtype=torch.float, device=device).div_(255)
 
-        train_set = MyDataset(X_train, Y_train, transform=train_transform_type,
-                              target_transform=ReshapeTransformTarget(10))
-        validation_set = MyDataset(X_validation, Y_validation, transform=train_transform_type, target_transform=None)
-    else:
-        validation_set = None
+        # dataset standardization
+        self.dataset_mean = torch.tensor([0.4914, 0.4822, 0.4465], device=device).view(3, 1, 1)
+        self.dataset_std = torch.tensor([0.2470, 0.2435, 0.2616], device=device).view(3, 1, 1)
 
-    # Class set and Layer set
-    if jparams['class_label_percentage'] == 1:
-        class_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=False,
-                                                 transform=train_transform_type)
-        layer_set = train_set
-    else:
-        class_set = SplitClass(torch.tensor(train_set.data), torch.tensor(train_set.targets),
-                               jparams['class_label_percentage'], seed=34,
-                               transform=train_transform_type)
+        self.data = torch.movedim(self.data, -1, 1)  # -> set dim to: (batch, channels, height, width)
+        self.targets = torch.tensor(self.targets, device=device)
 
-        layer_set = SplitClass(torch.tensor(train_set.data), torch.tensor(train_set.targets),
-                               jparams['class_label_percentage'], seed=34,
-                               transform=train_transform_type,
-                               target_transform=ReshapeTransformTarget(10))
+        self.transform = transforms.Compose([
+            # transforms.Grayscale(),
+            transforms.RandomHorizontalFlip(),
+            # SobelTransform(),
+            # transforms.Normalize(self.dataset_mean, self.dataset_std)
+            # transforms.RandomResizedCrop(32, scale=(0.6, 1.0))
+        ])
 
-    # Supervised set and Unsupervised set
-    if jparams['semi_seed'] < 0:
-        semi_seed = None
-    else:
-        semi_seed = jparams['semi_seed']
+    def __getitem__(self, index: int):
+        img = self.transform(self.data[index])
+        # per-image standardization
 
-    supervised_dataset, unsupervised_dataset = semi_supervised_dataset(torch.tensor(train_set.data),
-                                                                       torch.tensor(train_set.targets),
-                                                                       jparams['fcLayers'][-1], jparams['n_class'],
-                                                                       jparams['train_label_number'],
-                                                                       transform=train_transform_type, seed=semi_seed)
-    # Test set
-    test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                            download=True, transform=train_transform_type)
+        # mean = img.mean(dim=(0, 1, 2), keepdim=True)
+        # std = img.std(dim=(0, 1, 2), keepdim=True)
+        # img = (img - mean) / std
 
-    return train_set, test_set, validation_set, class_set, layer_set, supervised_dataset, unsupervised_dataset
+        target = self.targets[index]
+
+        return img, target
+        # return img, target
 
 
 def get_dataset(jparams, validation=False):
@@ -368,7 +364,7 @@ def returnSVHN(jparams, validation=False):
                                transform=train_transform_type)
 
         layer_set = SplitClass(train_data, train_labels,
-                               jparams['classLabel_percentage'], seed=34,
+                               jparams['class_label_percentage'], seed=34,
                                transform=train_transform_type,
                                target_transform=ReshapeTransformTarget(10))
 
