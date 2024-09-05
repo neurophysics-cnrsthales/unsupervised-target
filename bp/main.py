@@ -12,13 +12,13 @@ parser = argparse.ArgumentParser(description='Path of json file')
 parser.add_argument(
     '--json_path',
     type=str,
-    default=r'./configFile/unsupervised_bp/cnn/mnist',
+    default=r'./bp/',
     help='path of json configuration'
 )
 parser.add_argument(
     '--trained_path',
     type=str,
-    default=r'./simuResults/unsupervised_bp_1layer/model/S-1',
+    default=None,
     help='path of json configuration'
 )
 
@@ -32,6 +32,9 @@ with open(args.json_path + '/config.json') as f:
 batch_size = jparams['batchSize']
 batch_size_test = jparams['test_batchSize']
 
+# if jparams["dataset"] == "cifar10":
+#     train_loader, test_loader, class_loader, layer_loader = returnFastCIFAR10(jparams, validation=False)
+# else:
 # get data loader
 (train_loader, test_loader, validation_loader,
 class_loader, layer_loader, supervised_loader, unsupervised_loader) = get_dataset(jparams)
@@ -76,7 +79,10 @@ if __name__ == '__main__':
 
     elif jparams['action'] == 'train_class_layer':
         print("We train only the linear classifer")
-        trained_path = str(args.trained_path) + '/model_state_dict.pt'
+        if args.trained_path is None:
+            trained_path = None
+        else:
+            trained_path = str(args.trained_path) + '/model_state_dict.pt'
         train_class_layer(net, jparams, layer_loader, test_loader, trained_path=trained_path, base_path=BASE_PATH)
 
     else:

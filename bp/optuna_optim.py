@@ -61,7 +61,7 @@ def jparams_create(config, trial):
 
         # optimizing hyperparameters
         if jparams['mode'] == 'batch':
-            jparams["batchSize"] = trial.suggest_categorical("batchSize", [16, 32])
+            jparams["batchSize"] = trial.suggest_categorical("batchSize", [8, 16, 32])
             jparams["eta"] = 0.5
         else:
             jparams["batchSize"] = 1,

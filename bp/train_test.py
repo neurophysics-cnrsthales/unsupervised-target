@@ -60,17 +60,34 @@ def classify_network(net, class_net, layer_loader, optimizer, class_smooth=None)
 
         # class_net forward
         output = class_net(x)
+
+        # calculate the prediction
+        prediction = torch.argmax(output, dim=1)
+
         # class label smooth
         if class_smooth:
             targets = smooth_labels(targets.to(torch.float32), 0.2, 1)
-        loss = criterion(output, targets.to(torch.float32))
+
+        # print("targets dimension is:", targets.dim())
+        if targets.dim() == 1:
+            loss = criterion(output, targets.to(torch.long))
+            correct_train += (prediction == targets).sum().float()
+        else:
+            loss = criterion(output, targets.to(torch.float32))
+            correct_train += (prediction == torch.argmax(targets, dim=1)).sum().float()
+        # Ensure the targets are integers representing class indices
+        # TODO to support different type of targets, setting the if situation
+        # loss = criterion(output, targets.to(torch.long))  # Convert targets to LongTensor (integers)
+        # print("target is :", targets)
+
         # backpropagation
         loss.backward()
         optimizer.step()
-
-        # calculate the training errors
-        prediction = torch.argmax(output, dim=1)
-        correct_train += (prediction == torch.argmax(targets, dim=1)).sum().float()
+        #
+        # # calculate the training errors
+        # prediction = torch.argmax(output, dim=1)
+        # correct_train += (prediction == torch.argmax(targets, dim=1)).sum().float()
+        # correct_train += (prediction == targets).sum().float()
         total_train += targets.size(dim=0)
 
     # calculate the train error
@@ -98,7 +115,6 @@ def train_unsupervised(net, jparams, train_loader, epoch, optimizer):
         if net.cuda:
             data = data.to(net.device)
             # target = target.to(net.device)
-
         optimizer.zero_grad()
 
         # forward propagation
