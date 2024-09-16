@@ -7,6 +7,7 @@
   "batchSize": 256,
   "test_batchSize": 512,
   "cnn": true,
+  "C_list": [3, 32, 128],
   "fcLayers": [3000, 10],
   "lr":[2.3e-4, 2.4e-4, 1e-4, 2.3e-4],
   "activation_function": ["x", "relu","relu", "relu","x"],

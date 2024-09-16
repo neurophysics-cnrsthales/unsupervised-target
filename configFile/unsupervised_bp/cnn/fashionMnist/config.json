@@ -8,6 +8,7 @@
   "test_batchSize": 256,
   "cnn": true,
   "pool_type": "max",
+  "C_list": [1, 32, 128],
   "fcLayers": [3000],
   "lr":[5e-7, 2.5e-8, 2.5e-6],
   "activation_function": ["x", "relu","relu","x"],

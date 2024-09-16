@@ -51,6 +51,7 @@ _For plotting the Fig.3, brokenaxes package should be installed:_
 
 _For plotting the Fig.8, UMAP package should be installed:_  
 `pip install umap-learn`
+
 ## File organization
 - bp/: code of the backpropagation training.
 - ep/: code of the equilibrium propagation training.
@@ -98,7 +99,7 @@ _Parameters defined in **config.json**._
 | `pre_batchSize`          | Mini batch size for pre-training in semi-supervised learning.                                                      | `32`                                                                                                             |
 | `pre_lr`                 | Learning rate for pre-training in semi-supervised learning.                                                        | `[0.001, 0.003]`                                                                                                 |
 | `class_label_percentage` | Label percentage for class association in unsupervised training.                                                   | `0.01`                                                                                                           |
-| `class_activation`       | Activation function for added linear classifier.                                                                   | `"sigmoid"`                                                                                                      |
+| `class_activation`       | Activation function for added linear classifier.                                                                   | `"x"`                                                                                                            |
 | `class_lr`               | Learning rate for linear classifier.                                                                               | `[0.1]`                                                                                                          |
 | `class_epoch`            | Training epochs for linear classifier.                                                                             | `50`                                                                                                             |
 | `class_optimizer`        | Optimizer for linear classifier training.                                                                          | `"Adam"`                                                                                                         |
@@ -130,8 +131,10 @@ _Train a CNN for MNIST dataset:_
 ``python -m bp.main --json_path "./configFile/unsupervised_bp/cnn/mnist" ``  
 _Train a CNN for Fashion-MNIST dataset:_  
 ``python -m bp.main --json_path "./configFile/unsupervised_bp/cnn/fashionMnist" ``  
-_Train a CNN for Fashion-MNIST dataset:_  
-``python -m bp.main --json_path "./configFile/unsupervised_bp/cnn/svhn" ``
+_Train a CNN for SVHN dataset:_  
+``python -m bp.main --json_path "./configFile/unsupervised_bp/cnn/svhn" ``  
+_Train a CNN for CIFAR-10 dataset:_  
+``python -m bp.main --json_path "./configFile/unsupervised_bp/cnn/cifar10" ``  
 
 
 #### Unsupervised EP 

@@ -25,7 +25,7 @@
   "pre_lr": [0.001, 0.003],
 
   "class_label_percentage": 1,
-  "class_activation": "sigmoid",
+  "class_activation": "x",
   "class_lr": [0.1],
   "class_epoch": 50,
   "class_optimizer": "Adam",
