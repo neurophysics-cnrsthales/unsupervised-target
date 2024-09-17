@@ -54,31 +54,6 @@ class MyDataset(Dataset):
             target = self.target_transform(target)
 
         return data, target
-        #
-        # data = self.data[i, :]
-        # if not isinstance(data, np.ndarray):
-        #     data = data.numpy()
-        # # if self.order:
-        # #     data = data.permute(0, 1)
-        #
-        # target = self.targets[i]
-        #
-        # if self.transform:
-        #     data = self.transform(data)
-        #
-        # if self.target_transform:
-        #     target = self.target_transform(target)
-
-        # # data, label = self.data[item].numpy(), self.targets[item]
-        # if data.dtype != np.uint8:
-        #     data = data.astype(np.uint8)
-
-        # data = Image.fromarray(data)
-
-        # if self.targets is not None:
-        #     return data, target
-        # else:
-        #     return data
 
     def __len__(self):
         return len(self.data)
@@ -246,33 +221,19 @@ class FastCIFAR10(torchvision.datasets.CIFAR10):
         super().__init__(*args, **kwargs)
         self.data = torch.tensor(self.data, dtype=torch.float, device=device).div_(255)
 
-        # dataset standardization
-        self.dataset_mean = torch.tensor([0.4914, 0.4822, 0.4465], device=device).view(3, 1, 1)
-        self.dataset_std = torch.tensor([0.2470, 0.2435, 0.2616], device=device).view(3, 1, 1)
-
         self.data = torch.movedim(self.data, -1, 1)  # -> set dim to: (batch, channels, height, width)
         self.targets = torch.tensor(self.targets, device=device)
 
         self.transform = transforms.Compose([
-            # transforms.Grayscale(),
             transforms.RandomHorizontalFlip(),
-            # SobelTransform(),
-            # transforms.Normalize(self.dataset_mean, self.dataset_std)
-            # transforms.RandomResizedCrop(32, scale=(0.6, 1.0))
         ])
 
     def __getitem__(self, index: int):
         img = self.transform(self.data[index])
         # per-image standardization
-
-        # mean = img.mean(dim=(0, 1, 2), keepdim=True)
-        # std = img.std(dim=(0, 1, 2), keepdim=True)
-        # img = (img - mean) / std
-
         target = self.targets[index]
 
         return img, target
-        # return img, target
 
 
 def get_dataset(jparams, validation=False):
@@ -321,7 +282,6 @@ def load_dataset(train_set, test_set, validation_set, class_set, layer_set,
 
 def returnSVHN(jparams, validation=False):
     # Define the Transform
-    transform_type = torchvision.transforms.ToTensor()
     if jparams['cnn']:
         train_transform_type = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
     else:

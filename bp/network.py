@@ -64,7 +64,9 @@ class CNN(nn.Module):
         self.Conv = nn.ModuleList(None)  # TODO tobe removed?
 
         # define the CNN structure
-        C_list = [input_channel, 96, 384]
+        C_list = jparams["C_list"]
+
+        # C_list = [input_channel, 96, 384]
         Pad = [2, 1]
         convF = [5, 3]
         Fpool = [4, 4]
