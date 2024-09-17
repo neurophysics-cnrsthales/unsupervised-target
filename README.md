@@ -1,4 +1,4 @@
-# Unsupervised End-to-End Training with Bio-inspired Self-defined Target
+# Unsupervised End-to-End Training with a Self-defined Target
 
 In this work, we introduce a 'self-defined target' at the network's last layer to realize unsupervised end-to-end training. 
 This target is defined by Winner-Take-All (WTA) selectivity combined with homeostasis mechanism. 
