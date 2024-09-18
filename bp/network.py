@@ -54,10 +54,8 @@ class CNN(nn.Module):
         self.conv_number = 0
         if jparams['dataset'] == 'mnist' or jparams['dataset'] == 'fashionMnist':
             input_size = 28
-            input_channel = 1
         elif jparams['dataset'] == 'cifar10' or jparams['dataset'] == 'svhn':
             input_size = 32
-            input_channel = 3
         else:
             raise ValueError("The convolutional network now is only designed for mnist/fashionmnist/svhn dataset")
 
@@ -65,8 +63,6 @@ class CNN(nn.Module):
 
         # define the CNN structure
         C_list = jparams["C_list"]
-
-        # C_list = [input_channel, 96, 384]
         Pad = [2, 1]
         convF = [5, 3]
         Fpool = [4, 4]
