@@ -244,3 +244,20 @@ _Train the linear classifier on top of a trained unsupervised network:_
 
 We use the _reproduce_figures.ipynb_ to plot all the figures used in the article.
 
+## To cite this work
+
+```bibtex
+@article{Liu_2024,
+doi = {10.1088/2634-4386/ad8c78},
+url = {https://dx.doi.org/10.1088/2634-4386/ad8c78},
+year = {2024},
+month = {nov},
+publisher = {IOP Publishing},
+volume = {4},
+number = {4},
+pages = {044005},
+author = {Dongshu Liu and Jérémie Laydevant and Adrien Pontlevy and Damien Querlioz and Julie Grollier},
+title = {Unsupervised end-to-end training with a self-defined target},
+journal = {Neuromorphic Computing and Engineering},
+```
+
