@@ -1,9 +1,28 @@
 # Unsupervised End-to-End Training with a Self-defined Target
 
 In this work, we introduce a 'self-defined target' at the network's last layer to realize unsupervised end-to-end training. 
-This target is defined by Winner-Take-All (WTA) selectivity combined with homeostasis mechanism. 
-We calculate the unsupervised global mean square error (MSE) loss, which is the difference between the network's output 
-and our unsupervisedly defined target, and update the weight with the gradient-descent based algorithms.
+This target is defined by Winner-Take-All (WTA) selectivity combined with homeostasis mechanism, which can be described 
+with the following form:  
+
+$$
+d_i = 
+\begin{cases} 
+1 & \text{if } y_i - H_i \in \{ \text{$k$ largest elements of } y - H \}, \\
+0 & \text{otherwise}.
+\end{cases}
+$$
+where y is the network output value, with the size (batch, output number), and H is homeostasis term, with the size 
+(1, output number). 
+
+The homeostasis Term is updated by the difference between average activity $A$ and target activity $T$ (fixed value):
+$$H += gamma * (A - T),$$
+while average activity is calculated as the average of self-defined target in the mini-batch mode:
+$$A = average (d, dim=0)$$
+
+and in sequential mode (batch size=1), is the moving average of target d.
+
+We can thus calculate the unsupervised global mean square error (MSE) loss, which is the difference between the network's output 
+and our unsupervisedly defined target, and update the weight with the gradient-descent based algorithms.  
 
 This approach, framework-agnostic and compatible with both global and local learning rules, 
 in our case, Backpropation (BP) and Equilibrium propagation (EP) seperately, achieves a 97.6\% test accuracy on the MNIST dataset. 
