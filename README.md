@@ -3,7 +3,7 @@
 In this work, we introduce a 'self-defined target' at the network's last layer to realize unsupervised end-to-end training. 
 This target is defined by Winner-Take-All (WTA) selectivity combined with homeostasis mechanism, which can be described 
 with the following form:  
-![Self-defined target](figuresPlot/target_definition.png)
+![Self-defined target](figuresPlot/target_definition.PNG)
 Here, *y* represents the network output values, with dimensions(batch size, number of outputs), and *H* denotes the 
 homeostasis term, with dimensions (1,number of outputs).
 
@@ -25,8 +25,8 @@ def define_unsupervised_target(output, N, device, Homeo=None):
     return unsupervised_targets, n_maxindex
 ```
 
-The homeostasis term *H* is updated based on the difference between the average activity *A* and target activity *T* (a fixed value):  
-$$H += \gamma * (A - T),$$  and $$\gamma$$ is a hyperparameter.
+The homeostasis term *H* is updated based on the difference between the average activity *A* and target activity *T* (a fixed value): $$H += \gamma * (A - T),$$  and $$\gamma$$ is a hyperparameter.  
+
 The average activity *A* is calculated differently depending on the mode:
 
 - Mini-batch mode: *A* is calculated as the average of self-defined target *d* across the batch dimension:  
