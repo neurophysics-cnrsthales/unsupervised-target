@@ -3,22 +3,35 @@
 In this work, we introduce a 'self-defined target' at the network's last layer to realize unsupervised end-to-end training. 
 This target is defined by Winner-Take-All (WTA) selectivity combined with homeostasis mechanism, which can be described 
 with the following form:  
+![Self-defined target](figuresPlot/target_definition.png)
+Here, *y* represents the network output values, with dimensions(batch size, number of outputs), and *H* denotes the 
+homeostasis term, with dimensions (1,number of outputs).
 
-$$ d_i = 
-\begin{cases} 
-1 & \text{if } y_i - H_i \in \{ \text{$k$ largest elements of } y - H \}, \\
-0 & \text{otherwise}.
-\end{cases}
-$$
-where y is the network output value, with the size (batch, output number), and H is homeostasis term, with the size 
-(1, output number). 
+The definition of unsupervised target is realized through the function *define_unsupervised_target*:
+```python
+def define_unsupervised_target(output, N, device, Homeo=None):
+    with torch.no_grad():
+        # define unsupervised target
+        unsupervised_targets = torch.zeros(output.size(), device=device)
 
-The homeostasis Term is updated by the difference between average activity $A$ and target activity $T$ (fixed value):
-$$H += gamma * (A - T),$$
-while average activity is calculated as the average of self-defined target in the mini-batch mode:
-$$A = average (d, dim=0)$$
+        # N_maxindex
+        if Homeo is not None:
+            n_maxindex = torch.topk(output.detach() - Homeo, N).indices
+        else:
+            n_maxindex = torch.topk(output.detach(), N).indices
 
-and in sequential mode (batch size=1), is the moving average of target d.
+        unsupervised_targets.scatter_(1, n_maxindex, torch.ones(output.size(), device=device))  # WTA definition
+
+    return unsupervised_targets, n_maxindex
+```
+
+The homeostasis term *H* is updated based on the difference between the average activity *A* and target activity *T* (a fixed value):  
+$$H += \gamma * (A - T),$$  and $$\gamma$$ is a hyperparameter.
+The average activity *A* is calculated differently depending on the mode:
+
+- Mini-batch mode: *A* is calculated as the average of self-defined target *d* across the batch dimension:  
+$$A = average (d, dim=0)$$  
+- Sequential mode (batch size=1):  *A* is determined by the moving average of target *d*.
 
 We can thus calculate the unsupervised global mean square error (MSE) loss, which is the difference between the network's output 
 and our unsupervisedly defined target, and update the weight with the gradient-descent based algorithms.  
