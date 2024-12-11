@@ -4,8 +4,7 @@ In this work, we introduce a 'self-defined target' at the network's last layer t
 This target is defined by Winner-Take-All (WTA) selectivity combined with homeostasis mechanism, which can be described 
 with the following form:  
 
-$$
-d_i = 
+$$ d_i = 
 \begin{cases} 
 1 & \text{if } y_i - H_i \in \{ \text{$k$ largest elements of } y - H \}, \\
 0 & \text{otherwise}.
